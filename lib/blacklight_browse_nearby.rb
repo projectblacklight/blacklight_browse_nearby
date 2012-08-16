@@ -1,5 +1,5 @@
+require "blacklight"
 require "blacklight_browse_nearby/engine"
-
 class BlacklightBrowseNearby
   include Blacklight::SolrHelper
   attr_reader :items
