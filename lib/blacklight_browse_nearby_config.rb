@@ -1,5 +1,4 @@
-# re-thinking config names to be something more like sort_field, reverse_sort_field
-BlacklightBrowseNearby::Engine.config.value_field                 = "callnumber"
+BlacklightBrowseNearby::Engine.config.value_field                 = "value_display"
 BlacklightBrowseNearby::Engine.config.sortkey_field               = "shelfkey"
 BlacklightBrowseNearby::Engine.config.reverse_sortkey_field       = "reverse_shelfkey"
 BlacklightBrowseNearby::Engine.config.combined_key_field          = "combined_shelfkey"
@@ -9,4 +8,4 @@ BlacklightBrowseNearby::Engine.config.request_handler             = "/alphaTerms
 BlacklightBrowseNearby::Engine.config.default_hits                = "5"
 BlacklightBrowseNearby::Engine.config.full_view_default_hits      = "11"
 BlacklightBrowseNearby::Engine.config.nearby_fields               = [BlacklightBrowseNearby::Engine.config.value_field]
-BlacklightBrowseNearby::Engine.config.link_field                  = :title_display
+BlacklightBrowseNearby::Engine.config.link_field                  = "title_display"
