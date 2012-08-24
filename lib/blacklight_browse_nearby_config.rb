@@ -8,4 +8,5 @@ BlacklightBrowseNearby::Engine.config.combined_key_pattern        = "#{Blackligh
 BlacklightBrowseNearby::Engine.config.request_handler             = "/alphaTerms"
 BlacklightBrowseNearby::Engine.config.default_hits                = "5"
 BlacklightBrowseNearby::Engine.config.full_view_default_hits      = "11"
-BlacklightBrowseNearby::Engine.config.nearby_fields               = [:title_display, :callnumber]
+BlacklightBrowseNearby::Engine.config.nearby_fields               = [BlacklightBrowseNearby::Engine.config.value_field]
+BlacklightBrowseNearby::Engine.config.link_field                  = :title_display

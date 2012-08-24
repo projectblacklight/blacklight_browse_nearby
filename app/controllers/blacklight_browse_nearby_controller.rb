@@ -1,15 +1,25 @@
 class BlacklightBrowseNearbyController < ApplicationController
   include Blacklight::Catalog
+  
+  before_filter :append_blacklight_catalog_view_context
+  
   def index
-    @response, @original_doc = get_solr_response_for_doc_id(params[:start])
-    save_current_search_params
-    @document_list = BlacklightBrowseNearby.new(:combined_field => @original_doc[BlacklightBrowseNarby::Engine.config.combined_key.to_sym],:field_value=>params[:field_value], :before => 9, :after => 10, :page => params[:page]).items
-    render "catalog/_gallery_list"
+    options = {}
+    options[:page] = params[:page] if params[:page]
+    options[:number] = params[:per_page] if params[:per_page]
+    options[:preferred_value] = params[:preferred_value] if params[:preferred_value]
+    @nearby = BlacklightBrowseNearby.new(params[:start], options)
+    @document_list = @nearby.documents
+    respond_to do |format|
+      format.html{ save_current_search_params }
+      format.js
+    end
+
   end
   
-  def nearby
-    @nearby_response = BlacklightBrowseNearby.new(:combined_field=>params[BlacklightBrowseNarby::Engine.config.combined_key.to_sym],:field_value=>params[:field_value], :before => 2, :after => 2)
-    render :layout => false
-  end
+  protected
   
+  def append_blacklight_catalog_view_context
+    self.view_context.lookup_context.prefixes << "catalog"
+  end
 end

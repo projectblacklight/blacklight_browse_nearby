@@ -10,6 +10,7 @@ module BlacklightBrowseNearby::CatalogExtension
   
   protected  
   def blacklight_browse_nearby
-    @blacklight_browse_nearby_items = BlacklightBrowseNearby.new(params[:id]).documents
+    @nearby = BlacklightBrowseNearby.new(params[:id])
+    @blacklight_browse_nearby_items = @nearby.documents
   end
 end

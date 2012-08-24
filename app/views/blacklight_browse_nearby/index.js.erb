@@ -1,0 +1,2 @@
+$("#blacklight_nearby_items_container").replaceWith("<%= escape_javascript(render(:partial => 'blacklight_browse_nearby/nearby_items', :locals=>{:blacklight_browse_nearby_items => @document_list})) %>");
+$("#browse_value_select button").toggle();

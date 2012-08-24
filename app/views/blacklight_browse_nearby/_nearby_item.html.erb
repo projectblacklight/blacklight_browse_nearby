@@ -1,0 +1,8 @@
+<div class="item">
+  <%= link_to(document[BlacklightBrowseNearby::Engine.config.link_field] ,polymorphic_path(document)) %><br/>
+  <%- BlacklightBrowseNearby::Engine.config.nearby_fields.each do |field| -%>
+    <%- unless document[field].blank? -%>
+      <%= document[field].is_a?(Array) ? document[field].join(", ") : document[field] %><br/>
+    <%- end -%>
+  <%- end -%>
+</div>
