@@ -1,3 +1,99 @@
-= BlacklightBrowseNearby
+= Blacklight Browse Nearby
 
-This project rocks and uses MIT-LICENSE.
+This is a gem that will provide a small bit of HTML to provide on a record's show view as well as a larger browse view which will render the appropriate document partials as a search result.
+
+This gem has several configuration options that will need to match your solr configuration and some very specific solr field formatting necessary to work properly.  Continue reading below to get more information on how to properly configure both solr and the application and how to format these special fields.
+
+== Installation
+
+  $ gem install blacklight_browse_nearby
+  $ rails g blacklight_browse_nearby
+  
+An inclusion of BlacklightBrowseNearby::Controller
+  
+In a view under the show action of a controller that has included the BlacklightBrowseNearby::Controller you can use the render_nearby_items helper.
+
+  <%= render_nearby_items %>
+
+== Configurations
+
+The solr field name of the human readable value that we're sorting on. (default: "value_display")
+
+  BlacklightBrowseNearby::Engine.config.value_field
+  
+The solr field name of the sortable values that will be used by the solr terms component. (default: "shelfkey")
+  
+  BlacklightBrowseNearby::Engine.config.sortkey_field
+  
+The solr field name of the reverse sortable values that will be used by the solr terms component. (default: "reverse_shelfkey")
+  
+  BlacklightBrowseNearby::Engine.config.reverse_sortkey_field
+  
+The solr field name of the combined keys that will be used to handle switching between values in multi-valued fields. (default: "combined_shelfkey") 
+  
+  BlacklightBrowseNearby::Engine.config.combined_key_field
+  
+The string used to delimit values in the combined key field. (default: "-|-")
+  
+  BlacklightBrowseNearby::Engine.config.key_delimiter
+  
+The pattern of combined key field.  It is not recommended that you change this unless you absolutely have to. You should be able to cover most use cases by changing other configuration options.
+  
+  BlacklightBrowseNearby::Engine.config.combined_key_pattern
+  
+The request handler for the for the solr terms component. (default: "/alphaTerms")
+  
+  BlacklightBrowseNearby::Engine.config.request_handler
+  
+The default number of records to retrieve in the smaller nearby view. This should be an odd number because we want to get an even number before and after the center document. (default: "5")
+  
+  BlacklightBrowseNearby::Engine.config.default_hits
+  
+The default number of records to retrieve in the larger browse view. This should be an odd number because we want to get an even number before and after the center document. (default: "11")
+  
+  BlacklightBrowseNearby::Engine.config.full_view_default_hits
+  
+The fields that the default nearby_item partial will attempt to display. You will most likely want to override the nearby_item partial. (default: The value of BlacklightBrowseNearby::Engine.config.value_field)
+  
+  BlacklightBrowseNearby::Engine.config.nearby_fields
+  
+The field that the default nearby_item partial will attempt to use as a title and link. You will most likely want to override the nearby_item partial. (default: "title_display")
+  
+  BlacklightBrowseNearby::Engine.config.link_field
+
+
+You can set these configuration options from somewhere in your application (e.g. an initializer)
+
+== Necessary Fields in Solr
+
+There are 4 configurable solr fields necessary for this gem to function properly. value_field, sortkey_field, reverse_sortkey_field, and combined_key_field.  These should all be multi-valued fields.
+
+=== Combined Key
+
+The combined key field is necessary to handle documents with multiple values to browse from (e.g. multiple callnumbers).  This key should consist of a combination of the 3 other necessary fields in solr delimited by a special configurable string.
+
+A combined key field that matched the default configuration would look something like:
+
+  ["AAAA -|- aaaa -|- zzzz", "BBBB -|- bbbb -|- yyyy"]
+  
+This gem will be able to handle the pattern change when you update the configured solr field names or delimiter.  However; if you drastically change the pattern of this field you will need to update the combined_key_pattern configuration to match the new pattern.
+
+== Necessary Solr Request Handler
+
+You need to make sure there is a terms component setup.
+
+  <searchComponent name="termsComp" class="solr.TermsComponent"/>
+
+Then a request handler needs to be setup using that search component.  This request handler matches what is in the default configuration.
+
+  <requestHandler name="/alphaTerms" class="solr.SearchHandler">
+    <lst name="defaults">
+      <str name="echoParams">explicit</str>
+      <bool name="terms">true</bool>
+      <bool name="terms.lower.incl">false</bool>
+      <str name="terms.sort">index</str>
+    </lst>
+    <arr name="components">
+      <str>termsComp</str>
+    </arr>
+  </requestHandler>
