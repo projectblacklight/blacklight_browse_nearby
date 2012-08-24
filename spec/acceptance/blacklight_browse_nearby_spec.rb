@@ -27,6 +27,12 @@ describe "BlacklightBrowseNearby" do
     docs.map{|d| d["value_display"] }.should == [@previous_documents,@original_document,@next_documents].flatten.map{|d| d["value_display"]}
     docs.map{|d| d["value_display"] }.should == ["BBBB", "CCCC", "DDDD", "EEEE", ["FFFF", "NNNN"], "GGGG", "HHHH", "IIII", "JJJJ"]
   end
+  
+  it "should return an embty array if the object does not have all the required fields" do
+    Blacklight.stub(:solr).and_return(mock("solr"))
+    BlacklightBrowseNearby.any_instance.stub(:get_solr_response_for_doc_id).and_return([@document_response, {"id"=>"someid", "title_display" => "MyDocument"}])
+    BlacklightBrowseNearby.new("123").documents.should be_blank
+  end
 
   describe "originating document" do
     it "should have the original document available" do

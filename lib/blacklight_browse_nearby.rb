@@ -20,6 +20,7 @@ class BlacklightBrowseNearby
 
   def get_nearby_documents(id)
     @original_document = get_solr_response_for_doc_id(id).last # returns an array with a response object and the document.
+    return [] unless document_has_required_fields?
     shelfkey = get_value_from_combined_key(combined_key, shelfkey_field)
     reverse_shelfkey = get_value_from_combined_key(combined_key, reverse_shelfkey_field)
     if normalized_page == 0
@@ -89,6 +90,13 @@ class BlacklightBrowseNearby
   end
     
   protected
+
+  def document_has_required_fields?
+    [value_field, reverse_shelfkey_field, shelfkey_field, combined_key_field].each do |field|
+      return false if @original_document[field].blank?
+    end
+    true
+  end
 
   def get_value_from_combined_key(key, field)
     index = BlacklightBrowseNearby::Engine.config.combined_key_pattern.split(delimiter).map{|p|p.strip}.index(field)

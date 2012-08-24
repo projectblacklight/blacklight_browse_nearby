@@ -1,20 +1,22 @@
 <%- blacklight_browse_nearby_items ||= @blacklight_browse_nearby_items -%>
-<div id="blacklight_nearby_items_container">
-  <%= t('blacklight_browse_nearby.short_view.browse_text') %>
-  <%- if @nearby.potential_values.length > 1 -%>
-    <%= form_tag(nearby_index_path(:start=>(params[:id] || params[:start])), :method=>"GET", :id=>"browse_value_select") do %>
-      <%= hidden_field_tag :start, (params[:id] || params[:start]) %>
-      <%= hidden_field_tag :per_page, BlacklightBrowseNearby::Engine.config.full_view_default_hits %>
-      <%= select_tag :preferred_value, options_for_select(@nearby.potential_values, @nearby.current_value) %>
-      <%= button_tag :submit %>
+<%- unless blacklight_browse_nearby_items.blank? -%>
+  <div id="blacklight_nearby_items_container">
+    <%= t('blacklight_browse_nearby.short_view.browse_text') %>
+    <%- if @nearby.potential_values.length > 1 -%>
+      <%= form_tag(nearby_index_path(:start=>(params[:id] || params[:start])), :method=>"GET", :id=>"browse_value_select") do %>
+        <%= hidden_field_tag :start, (params[:id] || params[:start]) %>
+        <%= hidden_field_tag :per_page, BlacklightBrowseNearby::Engine.config.full_view_default_hits %>
+        <%= select_tag :preferred_value, options_for_select(@nearby.potential_values, @nearby.current_value) %>
+        <%= button_tag :submit %>
+      <%- end -%>
+    <%- else -%>
+      <%= @nearby.current_value %>
     <%- end -%>
-  <%- else -%>
-    <%= @nearby.current_value %>
-  <%- end -%>
-  <div id="blacklight_nearby_items">
-    <%- blacklight_browse_nearby_items.each do |document| -%>
-      <%= render :partial => "blacklight_browse_nearby/nearby_item", :locals => {:document=>document} %>
-    <%- end -%>
+    <div id="blacklight_nearby_items">
+      <%- blacklight_browse_nearby_items.each do |document| -%>
+        <%= render :partial => "blacklight_browse_nearby/nearby_item", :locals => {:document=>document} %>
+      <%- end -%>
+    </div>
+    <%= render "blacklight_browse_nearby/nearby_controls" %>
   </div>
-  <%= render "blacklight_browse_nearby/nearby_controls" %>
-</div>
+<%- end -%>
