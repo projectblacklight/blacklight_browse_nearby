@@ -2,7 +2,7 @@ require "blacklight"
 require "blacklight_browse_nearby/engine"
 require "blacklight_browse_nearby_config"
 class BlacklightBrowseNearby
-  autoload :CatalogExtension, "blacklight/catalog_extension"
+  autoload :Controller, "blacklight_browse_nearby/controller"
   
   include Blacklight::SolrHelper
   include Blacklight::Configurable

@@ -14,7 +14,7 @@ class BlacklightBrowseNearbyGenerator < Rails::Generators::Base
       unless IO.read("app/controllers/catalog_controller.rb").include?("BlacklightBrowseNearby::CatalogExtension")
         inject_into_class "app/controllers/catalog_controller.rb", "CatalogController" do
           "  # Adds a before filter to load nearby items\n" +        
-          "  include BlacklightBrowseNearby::CatalogExtension\n\n"
+          "  include BlacklightBrowseNearby::Controller\n\n"
         end
       end
     end

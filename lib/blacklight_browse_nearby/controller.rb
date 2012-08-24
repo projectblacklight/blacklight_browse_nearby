@@ -1,5 +1,5 @@
 # -*- encoding : utf-8 -*-
-module BlacklightBrowseNearby::CatalogExtension
+module BlacklightBrowseNearby::Controller
   extend ActiveSupport::Concern
   include ActionView::Helpers::CaptureHelper
   include ActionView::Context
