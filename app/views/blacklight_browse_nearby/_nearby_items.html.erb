@@ -1,6 +1,6 @@
 <%- blacklight_browse_nearby_items ||= @blacklight_browse_nearby_items -%>
 <div id="blacklight_nearby_items_container">
-  Browsing from
+  <%= t('blacklight_browse_nearby.short_view.browse_text') %>
   <%- if @nearby.potential_values.length > 1 -%>
     <%= form_tag(nearby_index_path(:start=>(params[:id] || params[:start])), :method=>"GET", :id=>"browse_value_select") do %>
       <%= hidden_field_tag :start, (params[:id] || params[:start]) %>
@@ -16,15 +16,5 @@
       <%= render :partial => "blacklight_browse_nearby/nearby_item", :locals => {:document=>document} %>
     <%- end -%>
   </div>
-  <div id="blacklight_nearby_items_controls" class="row">
-    <div class="span1">
-      <%= link_to("<< Prev", nearby_index_path(params.merge(:id=>nil, :action=> nil, :controller=>nil, :format => nil, :start=>(params[:id] || params[:start]), :page=>params[:page].to_i-1)), :class=>"navigation") %>
-    </div>
-    <div class="span1">
-      <%= link_to("Full View", nearby_index_path(:preferred_value=> @nearby.current_value , :start=>(params[:id] || params[:start]), :per_page=>BlacklightBrowseNearby::Engine.config.full_view_default_hits)) %>
-    </div>
-    <div class="span1">
-      <%= link_to("Next >>", nearby_index_path(params.merge(:id=>nil, :action=> nil, :controller=>nil, :format => nil, :start=>(params[:id] || params[:start]), :page=>params[:page].to_i+1)), :class=>"navigation") %>
-    </div>
-  </div>
+  <%= render "blacklight_browse_nearby/nearby_controls" %>
 </div>

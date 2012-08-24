@@ -1,13 +1,3 @@
-<div class="pagination">
-  <ul>
-    <li><%= link_to("<< Previous", nearby_index_path(params.merge(:page => params[:page].to_i-1)))  %></li>
-    <li><%= link_to("Next >>", nearby_index_path(params.merge(:page => params[:page].to_i+1)))  %></li>
-  </ul>
-</div>
+<%= render "blacklight_browse_nearby/browse_view_pagination" %>
 <%= render @document_list %>
-<div class="pagination">
-  <ul>
-    <li><%= link_to("<< Previous", nearby_index_path(params.merge(:page => params[:page].to_i-1)))  %></li>
-    <li><%= link_to("Next >>", nearby_index_path(params.merge(:page => params[:page].to_i+1)))  %></li>
-  </ul>
-</div>
+<%= render "blacklight_browse_nearby/browse_view_pagination" %>

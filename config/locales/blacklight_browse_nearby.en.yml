@@ -1,0 +1,11 @@
+en:
+  blacklight_browse_nearby:
+    full_view:
+      previous: '« Previous'
+      next: 'Next »'
+    short_view:
+      browse_text: 'Browsing from:'
+      previous: '« Prev'
+      next: 'Next »'
+      full_view: 'Full View'
+  

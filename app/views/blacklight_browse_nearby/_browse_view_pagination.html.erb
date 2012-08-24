@@ -1,0 +1,6 @@
+<div class="pagination">
+  <ul>
+    <li><%= link_to(t('blacklight_browse_nearby.full_view.previous'), nearby_index_path(params.merge(:page => params[:page].to_i-1)))  %></li>
+    <li><%= link_to(t('blacklight_browse_nearby.full_view.next'), nearby_index_path(params.merge(:page => params[:page].to_i+1)))  %></li>
+  </ul>
+</div>
