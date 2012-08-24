@@ -2,7 +2,7 @@ require "spec_helper"
 describe "BlacklightBrowseNearby" do
   before(:each) do
     @document_response  = {"hits" => "1"}
-    @original_document  = {"id" => "666", "callnumber" => "FFFF", "shelfkey" => "ffff", "reverse_shelfkey" => "zzzz", "combined_shelfkey" => ["FFFF -|- ffff -|- uuuu"]}
+    @original_document  = {"id" => "666", "callnumber" => ["FFFF", "NNNN"], "shelfkey" => ["ffff", "nnnn"], "reverse_shelfkey" => ["zzzz", "mmmm"], "combined_shelfkey" => ["FFFF -|- ffff -|- uuuu", "NNNN -|- nnnn -|- mmmm"]}
     @previous_terms     = {"terms" => {"reverse_shelfkey" => ["yyyy", 1, "xxxx", 1, "wwww", 1, "vvvv", 1, "uuuu", 1]}}
     @next_terms         = {"terms" => {"shelfkey"         => ["gggg", 1, "hhhh", 1, "iiii", 1, "jjjj", 1, "kkkk", 1]}}  
     @previous_documents = [{"id"=>"222",  "callnumber" => "BBBB"},
@@ -25,9 +25,55 @@ describe "BlacklightBrowseNearby" do
     docs.should be_a(Array)
     docs.length.should == 9
     docs.map{|d| d["callnumber"] }.should == [@previous_documents,@original_document,@next_documents].flatten.map{|d| d["callnumber"]}
-    docs.map{|d| d["callnumber"] }.should == ["BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIII", "JJJJ"]
+    docs.map{|d| d["callnumber"] }.should == ["BBBB", "CCCC", "DDDD", "EEEE", ["FFFF", "NNNN"], "GGGG", "HHHH", "IIII", "JJJJ"]
   end
 
+  describe "originating document" do
+    it "should have the original document available" do
+      Blacklight.stub(:solr).and_return(mock("solr"))
+      Blacklight.solr.should_receive(:send_and_receive).with("/solr/alphaTerms", {:params => {:"terms.fl"=>"shelfkey", :"terms.lower"=>"ffff", :"terms.limit" => 2}}).and_return(@next_terms)
+      Blacklight.solr.should_receive(:send_and_receive).with("/solr/alphaTerms", {:params => {:"terms.fl"=>"reverse_shelfkey", :"terms.lower"=>"uuuu", :"terms.limit"=>2}}).and_return(@previous_terms)
+      BlacklightBrowseNearby.any_instance.stub(:get_solr_response_for_doc_id).and_return([@document_response,@original_document])
+      BlacklightBrowseNearby.any_instance.stub(:get_solr_response_for_field_values).with("reverse_shelfkey", ["yyyy", "xxxx"], {:per_page=>2}).and_return([@document_response, @previous_documents])
+      BlacklightBrowseNearby.any_instance.stub(:get_solr_response_for_field_values).with("shelfkey", ["gggg", "hhhh"], {:per_page=>2}).and_return([@document_response, @next_documents])
+      nearby = BlacklightBrowseNearby.new("123")
+      nearby.original_document.should == @original_document
+    end
+    describe "current_value" do
+      it "should return the current value of the originating document" do
+        Blacklight.stub(:solr).and_return(mock("solr"))
+        Blacklight.solr.should_receive(:send_and_receive).with("/solr/alphaTerms", {:params => {:"terms.fl"=>"shelfkey", :"terms.lower"=>"ffff", :"terms.limit" => 2}}).and_return(@next_terms)
+        Blacklight.solr.should_receive(:send_and_receive).with("/solr/alphaTerms", {:params => {:"terms.fl"=>"reverse_shelfkey", :"terms.lower"=>"uuuu", :"terms.limit"=>2}}).and_return(@previous_terms)
+        BlacklightBrowseNearby.any_instance.stub(:get_solr_response_for_doc_id).and_return([@document_response,@original_document])
+        BlacklightBrowseNearby.any_instance.stub(:get_solr_response_for_field_values).with("reverse_shelfkey", ["yyyy", "xxxx"], {:per_page=>2}).and_return([@document_response, @previous_documents])
+        BlacklightBrowseNearby.any_instance.stub(:get_solr_response_for_field_values).with("shelfkey", ["gggg", "hhhh"], {:per_page=>2}).and_return([@document_response, @next_documents])
+        nearby = BlacklightBrowseNearby.new("123")
+        nearby.current_value.should == @original_document["callnumber"].first
+      end
+      it "should return the preferred value if one is provided " do
+        Blacklight.stub(:solr).and_return(mock("solr"))
+        Blacklight.solr.should_receive(:send_and_receive).with("/solr/alphaTerms", {:params => {:"terms.fl"=>"shelfkey", :"terms.lower"=>"nnnn", :"terms.limit" => 2}}).and_return(@next_terms)
+        Blacklight.solr.should_receive(:send_and_receive).with("/solr/alphaTerms", {:params => {:"terms.fl"=>"reverse_shelfkey", :"terms.lower"=>"mmmm", :"terms.limit"=>2}}).and_return(@previous_terms)
+        BlacklightBrowseNearby.any_instance.stub(:get_solr_response_for_doc_id).and_return([@document_response,@original_document])
+        BlacklightBrowseNearby.any_instance.stub(:get_solr_response_for_field_values).with("reverse_shelfkey", ["yyyy", "xxxx"], {:per_page=>2}).and_return([@document_response, @previous_documents])
+        BlacklightBrowseNearby.any_instance.stub(:get_solr_response_for_field_values).with("shelfkey", ["gggg", "hhhh"], {:per_page=>2}).and_return([@document_response, @next_documents])
+        nearby = BlacklightBrowseNearby.new("123", :preferred_value=>"NNNN")
+        nearby.current_value.should == @original_document["callnumber"].last
+      end
+    end
+    describe "potential_values" do
+      it "should return all the value fields from the current document" do
+        Blacklight.stub(:solr).and_return(mock("solr"))
+        Blacklight.solr.should_receive(:send_and_receive).with("/solr/alphaTerms", {:params => {:"terms.fl"=>"shelfkey", :"terms.lower"=>"ffff", :"terms.limit" => 2}}).and_return(@next_terms)
+        Blacklight.solr.should_receive(:send_and_receive).with("/solr/alphaTerms", {:params => {:"terms.fl"=>"reverse_shelfkey", :"terms.lower"=>"uuuu", :"terms.limit"=>2}}).and_return(@previous_terms)
+        BlacklightBrowseNearby.any_instance.stub(:get_solr_response_for_doc_id).and_return([@document_response,@original_document])
+        BlacklightBrowseNearby.any_instance.stub(:get_solr_response_for_field_values).with("reverse_shelfkey", ["yyyy", "xxxx"], {:per_page=>2}).and_return([@document_response, @previous_documents])
+        BlacklightBrowseNearby.any_instance.stub(:get_solr_response_for_field_values).with("shelfkey", ["gggg", "hhhh"], {:per_page=>2}).and_return([@document_response, @next_documents])
+        nearby = BlacklightBrowseNearby.new("123")
+        nearby.potential_values.should == @original_document["callnumber"]
+      end
+    end
+  end
 
   describe "Options" do  
     describe "start_of_terms" do
@@ -197,19 +243,7 @@ describe "BlacklightBrowseNearby" do
         nearby.send(:get_value_from_combined_key, combined_key, part).should == "#{part}MATCH"
       end
     end
-    it "should return the only key when only one is available" do
-      Blacklight.stub(:solr).and_return(mock("solr"))
-      Blacklight.solr.should_receive(:send_and_receive).twice.with("/solr/alphaTerms", {:params => {:"terms.fl"=>"shelfkey", :"terms.lower"=>"ffff", :"terms.limit" => 2}}).and_return(@next_terms)
-      Blacklight.solr.should_receive(:send_and_receive).twice.with("/solr/alphaTerms", {:params => {:"terms.fl"=>"reverse_shelfkey", :"terms.lower"=>"uuuu", :"terms.limit"=>2}}).and_return(@previous_terms)
-      BlacklightBrowseNearby.any_instance.stub(:get_solr_response_for_doc_id).and_return([@document_response,@original_document])
-      BlacklightBrowseNearby.any_instance.stub(:get_solr_response_for_field_values).with("reverse_shelfkey", ["yyyy", "xxxx"], {:per_page=>2}).and_return([@document_response, @previous_documents])
-      BlacklightBrowseNearby.any_instance.stub(:get_solr_response_for_field_values).with("shelfkey", ["gggg", "hhhh"], {:per_page=>2}).and_return([@document_response, @next_documents])
-      nearby = BlacklightBrowseNearby.new("123")
-      nearby.send(:get_combined_key, ["AAAA -|- aaaa -|- zzzz"]).should == "AAAA -|- aaaa -|- zzzz"
-      nearby = BlacklightBrowseNearby.new("123", :preferred_value=>"something")
-      nearby.send(:get_combined_key, ["AAAA -|- aaaa -|- zzzz"]).should == "AAAA -|- aaaa -|- zzzz"
-    end
-    it "should return the first key when multiple are available" do
+    it "should return the first key when a preferred value is not requested" do
       Blacklight.stub(:solr).and_return(mock("solr"))
       Blacklight.solr.should_receive(:send_and_receive).with("/solr/alphaTerms", {:params => {:"terms.fl"=>"shelfkey", :"terms.lower"=>"ffff", :"terms.limit" => 2}}).and_return(@next_terms)
       Blacklight.solr.should_receive(:send_and_receive).with("/solr/alphaTerms", {:params => {:"terms.fl"=>"reverse_shelfkey", :"terms.lower"=>"uuuu", :"terms.limit"=>2}}).and_return(@previous_terms)
@@ -217,17 +251,27 @@ describe "BlacklightBrowseNearby" do
       BlacklightBrowseNearby.any_instance.stub(:get_solr_response_for_field_values).with("reverse_shelfkey", ["yyyy", "xxxx"], {:per_page=>2}).and_return([@document_response, @previous_documents])
       BlacklightBrowseNearby.any_instance.stub(:get_solr_response_for_field_values).with("shelfkey", ["gggg", "hhhh"], {:per_page=>2}).and_return([@document_response, @next_documents])
       nearby = BlacklightBrowseNearby.new("123")
-      nearby.send(:get_combined_key, ["AAAA -|- aaaa -|- zzzz", "BBBB -|- bbbb -|- yyyy"]).should == "AAAA -|- aaaa -|- zzzz"
+      nearby.combined_key.should == "FFFF -|- ffff -|- uuuu"
     end
-    it "should return the key matching a preferred value if one is supplied (e.g. multi-valued fields)" do
+    it "should return the first key when there is only one available" do
       Blacklight.stub(:solr).and_return(mock("solr"))
-      Blacklight.solr.should_receive(:send_and_receive).with("/solr/alphaTerms", {:params => {:"terms.fl"=>"shelfkey", :"terms.lower"=>"ffff", :"terms.limit" => 2}}).and_return(@next_terms)
-      Blacklight.solr.should_receive(:send_and_receive).with("/solr/alphaTerms", {:params => {:"terms.fl"=>"reverse_shelfkey", :"terms.lower"=>"uuuu", :"terms.limit"=>2}}).and_return(@previous_terms)
+      Blacklight.solr.should_receive(:send_and_receive).with("/solr/alphaTerms", {:params => {:"terms.fl"=>"shelfkey", :"terms.lower"=>"nnnn", :"terms.limit" => 2}}).and_return(@next_terms)
+      Blacklight.solr.should_receive(:send_and_receive).with("/solr/alphaTerms", {:params => {:"terms.fl"=>"reverse_shelfkey", :"terms.lower"=>"mmmm", :"terms.limit"=>2}}).and_return(@previous_terms)
+      BlacklightBrowseNearby.any_instance.stub(:get_solr_response_for_doc_id).and_return([@document_response,@original_document.merge("combined_shelfkey"=>[@original_document["combined_shelfkey"].last])])
+      BlacklightBrowseNearby.any_instance.stub(:get_solr_response_for_field_values).with("reverse_shelfkey", ["yyyy", "xxxx"], {:per_page=>2}).and_return([@document_response, @previous_documents])
+      BlacklightBrowseNearby.any_instance.stub(:get_solr_response_for_field_values).with("shelfkey", ["gggg", "hhhh"], {:per_page=>2}).and_return([@document_response, @next_documents])
+      nearby = BlacklightBrowseNearby.new("123")
+      nearby.combined_key.should == "NNNN -|- nnnn -|- mmmm"
+    end
+    it "should return the key matching the preferred value if one is given" do
+      Blacklight.stub(:solr).and_return(mock("solr"))
+      Blacklight.solr.should_receive(:send_and_receive).with("/solr/alphaTerms", {:params => {:"terms.fl"=>"shelfkey", :"terms.lower"=>"nnnn", :"terms.limit" => 2}}).and_return(@next_terms)
+      Blacklight.solr.should_receive(:send_and_receive).with("/solr/alphaTerms", {:params => {:"terms.fl"=>"reverse_shelfkey", :"terms.lower"=>"mmmm", :"terms.limit"=>2}}).and_return(@previous_terms)
       BlacklightBrowseNearby.any_instance.stub(:get_solr_response_for_doc_id).and_return([@document_response,@original_document])
       BlacklightBrowseNearby.any_instance.stub(:get_solr_response_for_field_values).with("reverse_shelfkey", ["yyyy", "xxxx"], {:per_page=>2}).and_return([@document_response, @previous_documents])
       BlacklightBrowseNearby.any_instance.stub(:get_solr_response_for_field_values).with("shelfkey", ["gggg", "hhhh"], {:per_page=>2}).and_return([@document_response, @next_documents])
-      nearby = BlacklightBrowseNearby.new("123", :preferred_value => "BBBB")
-      nearby.send(:get_combined_key, ["AAAA -|- aaaa -|- zzzz", "BBBB -|- bbbb -|- yyyy"]).should == "BBBB -|- bbbb -|- yyyy"
+      nearby = BlacklightBrowseNearby.new("123", :preferred_value=>"NNNN")
+      nearby.combined_key.should == "NNNN -|- nnnn -|- mmmm"
     end
   end
 end

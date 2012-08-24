@@ -12,22 +12,20 @@ class BlacklightBrowseNearby
   end
   def params; {}; end
   
-  attr_reader :documents
+  attr_reader :documents, :original_document
   def initialize(object_id, options={})
     @opts = options
     @documents = get_nearby_documents(object_id)
   end
 
   def get_nearby_documents(id)
-    original_doc = get_solr_response_for_doc_id(id).last # returns an array with a response object and the document.
-    combined_key = get_combined_key(original_doc[combined_key_field])
+    @original_document = get_solr_response_for_doc_id(id).last # returns an array with a response object and the document.
     shelfkey = get_value_from_combined_key(combined_key, shelfkey_field)
     reverse_shelfkey = get_value_from_combined_key(combined_key, reverse_shelfkey_field)
     if normalized_page == 0
       previous_documents = get_next_documents_from_field_value(reverse_shelfkey, reverse_shelfkey_field)
-      current_document = original_doc
       next_documents = get_next_documents_from_field_value(shelfkey, shelfkey_field)
-      documents = [previous_documents, current_document, next_documents].flatten
+      documents = [previous_documents, @original_document, next_documents].flatten
     elsif @opts[:page].to_i < 0
       documents = get_next_documents_from_field_value(reverse_shelfkey, reverse_shelfkey_field)
     elsif @opts[:page].to_i > 0
@@ -75,14 +73,22 @@ class BlacklightBrowseNearby
     @opts[:page].to_s.gsub("-","").to_i
   end
   
-  protected
-
-  def get_combined_key(combined_keys)
-    return combined_keys.first if (combined_keys.length == 1 or !@opts.has_key?(:preferred_value))
-    combined_keys.each do |key|
+  def potential_values
+    @original_document[value_field]
+  end
+  
+  def current_value
+    get_value_from_combined_key(combined_key, value_field)
+  end
+  
+  def combined_key
+    return @original_document[combined_key_field].first if (@original_document[combined_key_field].length == 1 or @opts[:preferred_value].blank?)
+    @original_document[combined_key_field].each do |key|
       return key if get_value_from_combined_key(key, value_field) == @opts[:preferred_value]
     end
   end
+    
+  protected
 
   def get_value_from_combined_key(key, field)
     index = BlacklightBrowseNearby::Engine.config.combined_key_pattern.split(delimiter).map{|p|p.strip}.index(field)
