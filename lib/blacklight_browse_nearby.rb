@@ -80,7 +80,7 @@ class BlacklightBrowseNearby
   def get_combined_key(combined_keys)
     return combined_keys.first if (combined_keys.length == 1 or !@opts.has_key?(:preferred_value))
     combined_keys.each do |key|
-      return key if key.split(delimiter).map{|k|k.strip}.include?(@opts[:preferred_value])
+      return key if get_value_from_combined_key(key, value_field) == @opts[:preferred_value]
     end
   end
 
@@ -89,16 +89,20 @@ class BlacklightBrowseNearby
     key.split(delimiter)[index].strip
   end
 
+  def value_field
+    BlacklightBrowseNearby::Engine.config.value_field
+  end
+
   def reverse_shelfkey_field
-    BlacklightBrowseNearby::Engine.config.reverse_shelfkey
+    BlacklightBrowseNearby::Engine.config.reverse_sortkey_field
   end
 
   def shelfkey_field
-    BlacklightBrowseNearby::Engine.config.shelfkey
+    BlacklightBrowseNearby::Engine.config.sortkey_field
   end
 
   def combined_key_field
-    BlacklightBrowseNearby::Engine.config.combined_key
+    BlacklightBrowseNearby::Engine.config.combined_key_field
   end
   
   def delimiter
