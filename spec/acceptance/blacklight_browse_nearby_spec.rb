@@ -2,17 +2,17 @@ require "spec_helper"
 describe "BlacklightBrowseNearby" do
   before(:each) do
     @document_response  = {"hits" => "1"}
-    @original_document  = {"id" => "666", "callnumber" => ["FFFF", "NNNN"], "shelfkey" => ["ffff", "nnnn"], "reverse_shelfkey" => ["zzzz", "mmmm"], "combined_shelfkey" => ["FFFF -|- ffff -|- uuuu", "NNNN -|- nnnn -|- mmmm"]}
+    @original_document  = {"id" => "666", "value_display" => ["FFFF", "NNNN"], "shelfkey" => ["ffff", "nnnn"], "reverse_shelfkey" => ["zzzz", "mmmm"], "combined_shelfkey" => ["FFFF -|- ffff -|- uuuu", "NNNN -|- nnnn -|- mmmm"]}
     @previous_terms     = {"terms" => {"reverse_shelfkey" => ["yyyy", 1, "xxxx", 1, "wwww", 1, "vvvv", 1, "uuuu", 1]}}
     @next_terms         = {"terms" => {"shelfkey"         => ["gggg", 1, "hhhh", 1, "iiii", 1, "jjjj", 1, "kkkk", 1]}}  
-    @previous_documents = [{"id"=>"222",  "callnumber" => "BBBB"},
-                           {"id"=>"333",  "callnumber" => "CCCC"},
-                           {"id"=>"444",  "callnumber" => "DDDD"},
-                           {"id"=>"555",  "callnumber" => "EEEE"}]
-    @next_documents     = [{"id"=>"777",  "callnumber" => "GGGG"},
-                           {"id"=>"888",  "callnumber" => "HHHH"},
-                           {"id"=>"999",  "callnumber" => "IIII"},
-                           {"id"=>"1010", "callnumber" => "JJJJ"}]
+    @previous_documents = [{"id"=>"222",  "value_display" => "BBBB"},
+                           {"id"=>"333",  "value_display" => "CCCC"},
+                           {"id"=>"444",  "value_display" => "DDDD"},
+                           {"id"=>"555",  "value_display" => "EEEE"}]
+    @next_documents     = [{"id"=>"777",  "value_display" => "GGGG"},
+                           {"id"=>"888",  "value_display" => "HHHH"},
+                           {"id"=>"999",  "value_display" => "IIII"},
+                           {"id"=>"1010", "value_display" => "JJJJ"}]
   end
   it "should combine the previous, current, and next documents returned from solr" do
     Blacklight.stub(:solr).and_return(mock("solr"))
@@ -24,8 +24,8 @@ describe "BlacklightBrowseNearby" do
     docs = BlacklightBrowseNearby.new("123").documents
     docs.should be_a(Array)
     docs.length.should == 9
-    docs.map{|d| d["callnumber"] }.should == [@previous_documents,@original_document,@next_documents].flatten.map{|d| d["callnumber"]}
-    docs.map{|d| d["callnumber"] }.should == ["BBBB", "CCCC", "DDDD", "EEEE", ["FFFF", "NNNN"], "GGGG", "HHHH", "IIII", "JJJJ"]
+    docs.map{|d| d["value_display"] }.should == [@previous_documents,@original_document,@next_documents].flatten.map{|d| d["value_display"]}
+    docs.map{|d| d["value_display"] }.should == ["BBBB", "CCCC", "DDDD", "EEEE", ["FFFF", "NNNN"], "GGGG", "HHHH", "IIII", "JJJJ"]
   end
 
   describe "originating document" do
@@ -48,7 +48,7 @@ describe "BlacklightBrowseNearby" do
         BlacklightBrowseNearby.any_instance.stub(:get_solr_response_for_field_values).with("reverse_shelfkey", ["yyyy", "xxxx"], {:per_page=>2}).and_return([@document_response, @previous_documents])
         BlacklightBrowseNearby.any_instance.stub(:get_solr_response_for_field_values).with("shelfkey", ["gggg", "hhhh"], {:per_page=>2}).and_return([@document_response, @next_documents])
         nearby = BlacklightBrowseNearby.new("123")
-        nearby.current_value.should == @original_document["callnumber"].first
+        nearby.current_value.should == @original_document["value_display"].first
       end
       it "should return the preferred value if one is provided " do
         Blacklight.stub(:solr).and_return(mock("solr"))
@@ -58,7 +58,7 @@ describe "BlacklightBrowseNearby" do
         BlacklightBrowseNearby.any_instance.stub(:get_solr_response_for_field_values).with("reverse_shelfkey", ["yyyy", "xxxx"], {:per_page=>2}).and_return([@document_response, @previous_documents])
         BlacklightBrowseNearby.any_instance.stub(:get_solr_response_for_field_values).with("shelfkey", ["gggg", "hhhh"], {:per_page=>2}).and_return([@document_response, @next_documents])
         nearby = BlacklightBrowseNearby.new("123", :preferred_value=>"NNNN")
-        nearby.current_value.should == @original_document["callnumber"].last
+        nearby.current_value.should == @original_document["value_display"].last
       end
     end
     describe "potential_values" do
@@ -70,7 +70,7 @@ describe "BlacklightBrowseNearby" do
         BlacklightBrowseNearby.any_instance.stub(:get_solr_response_for_field_values).with("reverse_shelfkey", ["yyyy", "xxxx"], {:per_page=>2}).and_return([@document_response, @previous_documents])
         BlacklightBrowseNearby.any_instance.stub(:get_solr_response_for_field_values).with("shelfkey", ["gggg", "hhhh"], {:per_page=>2}).and_return([@document_response, @next_documents])
         nearby = BlacklightBrowseNearby.new("123")
-        nearby.potential_values.should == @original_document["callnumber"]
+        nearby.potential_values.should == @original_document["value_display"]
       end
     end
   end
@@ -238,8 +238,8 @@ describe "BlacklightBrowseNearby" do
       BlacklightBrowseNearby.any_instance.stub(:get_solr_response_for_field_values).with("reverse_shelfkey", ["yyyy", "xxxx"], {:per_page=>2}).and_return([@document_response, @previous_documents])
       BlacklightBrowseNearby.any_instance.stub(:get_solr_response_for_field_values).with("shelfkey", ["gggg", "hhhh"], {:per_page=>2}).and_return([@document_response, @next_documents])
       nearby = BlacklightBrowseNearby.new("123")
-      combined_key = "callnumberMATCH -|- shelfkeyMATCH -|- reverse_shelfkeyMATCH"
-      ["shelfkey", "callnumber", "reverse_shelfkey"].each do |part|
+      combined_key = "value_displayMATCH -|- shelfkeyMATCH -|- reverse_shelfkeyMATCH"
+      ["shelfkey", "value_display", "reverse_shelfkey"].each do |part|
         nearby.send(:get_value_from_combined_key, combined_key, part).should == "#{part}MATCH"
       end
     end
