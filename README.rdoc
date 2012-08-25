@@ -8,10 +8,8 @@ This gem has several configuration options that will need to match your solr con
 
   $ gem install blacklight_browse_nearby
   $ rails g blacklight_browse_nearby
-  
-An inclusion of BlacklightBrowseNearby::Controller
-  
-In a view under the show action of a controller that has included the BlacklightBrowseNearby::Controller you can use the render_nearby_items helper.
+    
+In order to display the small browse nearby UI you must insert the render_nearby_items helper method into a view.  This view must be under the show action of a controller that has included the BlacklightBrowseNearby::Controller (CatalogController by default).
 
   <%= render_nearby_items %>
 
