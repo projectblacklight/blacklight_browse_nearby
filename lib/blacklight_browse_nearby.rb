@@ -2,14 +2,12 @@ require "blacklight"
 require "blacklight_browse_nearby/engine"
 require "blacklight_browse_nearby_config"
 class BlacklightBrowseNearby
-  autoload :Controller, "blacklight_browse_nearby/controller"
   
+  autoload :Controller, "blacklight_browse_nearby/controller"
+    
   include Blacklight::SolrHelper
   include Blacklight::Configurable
-  def blacklight_config
-    @config = Blacklight::Configuration.new
-    @config
-  end
+  
   def params; {}; end
   
   attr_reader :documents, :original_document
