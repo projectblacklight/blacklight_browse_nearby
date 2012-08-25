@@ -7,9 +7,7 @@ class BlacklightBrowseNearby
     
   include Blacklight::SolrHelper
   include Blacklight::Configurable
-  
-  def params; {}; end
-  
+    
   attr_reader :documents, :original_document
   def initialize(object_id, options={})
     @opts = options
@@ -85,6 +83,10 @@ class BlacklightBrowseNearby
     @original_document[combined_key_field].each do |key|
       return key if get_value_from_combined_key(key, value_field) == @opts[:preferred_value]
     end
+  end
+  
+  def params
+    @opts[:params] || {}
   end
     
   protected
