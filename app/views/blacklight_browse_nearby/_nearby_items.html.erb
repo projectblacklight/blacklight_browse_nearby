@@ -6,7 +6,7 @@
       <%= form_tag(nearby_index_path(:start=>(params[:id] || params[:start])), :method=>"GET", :id=>"browse_value_select") do %>
         <%= hidden_field_tag :start, (params[:id] || params[:start]) %>
         <%= hidden_field_tag :per_page, BlacklightBrowseNearby::Engine.config.full_view_default_hits %>
-        <%= select_tag :preferred_value, options_for_select(@nearby.potential_values, @nearby.current_value) %>
+        <%= select_tag :preferred_value, options_for_select(@nearby.potential_values, @nearby.current_value), :class=>"span3" %>
         <%= button_tag :submit %>
       <%- end -%>
     <%- else -%>
