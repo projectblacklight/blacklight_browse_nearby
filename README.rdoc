@@ -93,6 +93,10 @@ A combined key field that matched the default configuration would look something
   
 This gem will be able to handle the pattern change when you update the configured solr field names or delimiter.  However; if you drastically change the pattern of this field you will need to update the combined_key_pattern configuration to match the new pattern.
 
+=== More information about sort keys and solr configurations
+
+For a more detailed explanation of the solr configurations and how we generated the sort keys for various data types see: https://github.com/projectblacklight/blacklight_browse_nearby/blob/master/SOLR_README.rdoc
+
 == Necessary Solr Request Handler
 
 You need to make sure there is a terms component setup.

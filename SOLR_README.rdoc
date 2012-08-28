@@ -1,0 +1,148 @@
+= Solr for Browse Nearby
+
+=== Assumptions
+* The Solr documents have a sensible linear sort, and the sort values will be stored in a Solr field.
+* A single Solr document may have more than one sort value. 
+** examples
+*** Solr document is from a Marc record for multiple items with different call numbers
+*** Solr document has an English title and a title in original script
+*** Solr document has multiple dates
+* Documents without values in the sort field will not appear in browse nearby.
+* A single sort value may pertain to more than one Solr document.  (e.g.  there are multiple books with the same title)
+* We have a starting value.
+* We need to look backwards as well as forwards.
+* Sort values may be sparsely distributed
+* Sort values may be clumpy
+* We will know how many documents we want ahead or behind of our starting point, but we won't know the *values* for the sort keys. 
+** range queries for large numbers of documents under these circumstances have terrible performance.
+
+
+=== Objectives: 
+* Given a starting sort value, we want to get some number of documents ahead and behind the starting value.
+* We want fast Solr response times.
+
+
+== Sort key
+
+For each Solr document, you need an INDEXED Solr field (can be multivalued) for which each value is a SINGLE TOKEN with the NORMALIZED value.  
+
+Generally, values need to be normalized so they will sort correctly:
+
+dates:
+
+ March 3, 2012 --> 20120303
+ 3/4/2012      --> 20120304
+ 03/05/2012    --> 20120305
+ 13/5/2011     --> 20110513
+ 5/14/2011     --> 20110514
+ 2010/08/22    --> 20100822
+
+titles:
+
+ Rose      --> rose
+ The Rose  --> rose, the
+ A rose    --> rose, a
+
+Call numbers:
+
+ HC337 .F5 .F512                 --> lc+hc++0337.000000+f0.500000+f0.512000
+ TR692 .P37                      --> lc+tr++0692.000000+p0.370000+
+ M5 .L3 .V2 OP.7:NO.6 1880       --> (I don't want to think about it)
+ M5 .L3 K2 .Q2 MD:CRAP0*DMA 1981 --> (I don't want to think about it)
+
+Call number parsing can get really nasty.  Call number sorting is often no picnic either.
+
+There is java code in the SolrMarc project to normalize LC and Dewey call numbers for this purpose:
+
+ https://github.com/solrmarc/stanford-solr-marc/blob/master/core/src/org/solrmarc/tools/CallNumUtils.java
+   or
+ http://code.google.com/p/solrmarc/source/browse/trunk/lib/solrmarc/src/org/solrmarc/tools/CallNumUtils.java
+
+   See getLCShelfkey(), getDeweyShelfkey() methods.
+
+ Other references:
+   http://code4lib.org/conference/2010/dushay_keck2
+   http://archive.org/details/HowToImplementAVirtualBookshelfWithSolr-NaomiDushayAndJessieKeck
+ 
+
+Note that the user facing value for the sort key is generally NOT normalized.
+
+== Reverse sort key
+
+Solr provides the solr.TermsComponent (http://wiki.apache.org/solr/TermsComponent) which allows us to see the ordered values for a Solr indexed field.  However, this only words in the *forward* direction.
+
+In order to get the documents before a given sort value, we need a way to use the TermsComponent for values in the reverse order.  We can accomplish this by having a field that Solr will sort in the reverse order of the sort key:  we call this the reverse sort key.
+
+An easy algorithm to get from a sort key to a reverse sort key for alphanum characters:
+
+ 1. create a map where
+  '0' --> 'Z'
+  ...
+  '9' --> 'Q'
+  'A' --> 'P'
+  ...
+  'P' --> 'A'
+  'Q' --> '9'
+  ...
+  'Z' --> '0'
+
+ 2.  create a default reverse sort key of some max length where each character is '~'
+ 2.  for each alphanum character in your sort key, replace the corresponding character in the reverse sort key with the mapped character.
+
+There is java code in the SolrMarc project to produce reversed value strings:
+
+ https://github.com/solrmarc/stanford-solr-marc/blob/master/core/src/org/solrmarc/tools/CallNumUtils.java
+   or
+ http://code.google.com/p/solrmarc/source/browse/trunk/lib/solrmarc/src/org/solrmarc/tools/CallNumUtils.java
+
+   See getReverseShelfkey() methods
+
+ Other references:
+   http://code4lib.org/conference/2010/dushay_keck2
+   http://archive.org/details/HowToImplementAVirtualBookshelfWithSolr-NaomiDushayAndJessieKeck
+
+
+== Term lookups for sort keys
+
+* Your solrconfig must have the solr.TermsComponent (http://wiki.apache.org/solr/TermsComponent) as a searchComponent
+* Your solrconfig must have a requestHandler that uses that searchComponent
+
+ <searchComponent name="termsComp" class="solr.TermsComponent"/>
+ 
+ <!-- used to get consecutive terms for browsing -->
+ <requestHandler name="/alphaTerms" class="solr.SearchHandler">
+   <lst name="defaults">
+     <str name="echoParams">explicit</str>
+     <bool name="terms">true</bool>
+     <bool name="terms.lower.incl">true</bool>
+   </lst>
+   <arr name="components">
+     <str>termsComp</str>
+   </arr>
+ </requestHandler>
+
+This will be used to get the next VALUES for the sort key field and the next VALUES for the reverse sort key field.
+
+See http://www.stanford.edu/people/~ndushay/code4lib2010/stanford_virtual_shelf.pdf starting on page 21 for more details.
+
+Note that the blacklight_browse_nearby Gem will make the Solr requests -- you just need to have the requestHandler in your Solr config, and configure the gem properly.
+ 
+
+== Document lookups given sort_key or reverse_sort_key
+
+Now that we have the VALUES for our sort keys (and reverse sort keys), we need to get the Solr DOCUMENTS that correspond to these values, as it is the Documents we want to show in our application's UI.  This is easily accomplished with a fielded query for the sort key values in the sort key field, and a fielded query for the reverse sort key values in the reverse sort key field.
+
+
+== Getting a Start Value
+
+=== from a given Solr document with a single sort key value
+
+If you are looking at a single Solr document with a single value for the sort key, this is easy -- use the sort key value!   
+
+=== from a given Solr document with multiple sort key values
+
+If there are multiple values in that Solr document for the sort key, you will need to choose one.  If you want your users to decide, you will need to be sure you can get the sort key that corresponds to the value displayed to the user.  For example, we do not display our shelf keys, but instead our call numbers -- so our Solr documents have a repeatable field containing a call number and its corresponding shelfkey.
+
+=== from a user entered string
+
+You will need to normalize the string in the same way you normalized the sort key values before you can use it for term lookups.

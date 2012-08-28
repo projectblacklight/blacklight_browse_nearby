@@ -12,7 +12,7 @@ Gem::Specification.new do |s|
   s.summary     = "Browse nearby plugin for Blacklight."
   s.description = "Browse nearby plugin for Blacklight."
 
-  s.files = Dir["{app,config,lib}/**/*"] + ["LICENSE", "Rakefile", "README.rdoc"]
+  s.files = Dir["{app,config,lib}/**/*"] + ["LICENSE", "Rakefile", "README.rdoc", "SOLR_README.rdoc"]
   s.test_files = Dir["spec/**/*"]
 
   s.add_dependency "rails", "~> 3.2.1"
