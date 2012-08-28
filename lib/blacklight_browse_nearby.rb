@@ -53,7 +53,7 @@ class BlacklightBrowseNearby
       :"terms.lower"      => value,
       :"terms.limit"      => total_terms
     }
-    response = Blacklight.solr.send_and_receive("/solr#{BlacklightBrowseNearby::Engine.config.request_handler}", {:params=>solr_options})
+    response = Blacklight.solr.send_and_receive("#{BlacklightBrowseNearby::Engine.config.request_handler}", {:params=>solr_options})
     response["terms"][field].select{|term| term.is_a?(String) }[start_of_terms..(total_terms-1)]
   end
 
