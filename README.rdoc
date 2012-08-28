@@ -12,6 +12,23 @@ This gem has several configuration options that will need to match your solr con
 In order to display the small browse nearby UI you must insert the render_nearby_items helper method into a view.  This view must be under the show action of a controller that has included the BlacklightBrowseNearby::Controller (CatalogController by default).
 
   <%= render_nearby_items %>
+  
+  
+== Basic Usage
+
+Simply giving an object ID will return the configured number of documents before and after (including the center document) the given ID (555).
+
+  BlacklightBrowseNearby.new("555").documents
+  
+Passing a number (without a page) will return the requested number of documents before and after (including the center document) the given ID (555).
+
+  BlacklightBrowseNearby.new("555", :number => 11).documents
+  
+Passing a page will return the configured number of documents before or after the given ID (555). Negative page numbers return documents before and positive numbers return documents after. (the number parameter will work as expected)
+
+  BlacklightBrowseNearby.new("555", :page => -3).documents # documents before
+  BlacklightBrowseNearby.new("555", :page => 3).documents # documents after
+
 
 == Configurations
 
