@@ -55,6 +55,7 @@ Call number parsing can get really nasty.  Call number sorting is often no picni
 There is java code in the SolrMarc project to normalize LC and Dewey call numbers for this purpose:
 
 See getLCShelfkey(), getDeweyShelfkey() methods in:
+
 https://github.com/solrmarc/stanford-solr-marc/blob/master/core/src/org/solrmarc/tools/CallNumUtils.java or http://code.google.com/p/solrmarc/source/browse/trunk/lib/solrmarc/src/org/solrmarc/tools/CallNumUtils.java
 
 Other references:
@@ -89,6 +90,7 @@ An easy algorithm to get from a sort key to a reverse sort key for alphanum char
 There is java code in the SolrMarc project to produce reversed value strings:
 
 See getReverseShelfkey() methods in: 
+
 https://github.com/solrmarc/stanford-solr-marc/blob/master/core/src/org/solrmarc/tools/CallNumUtils.java or http://code.google.com/p/solrmarc/source/browse/trunk/lib/solrmarc/src/org/solrmarc/tools/CallNumUtils.java
 
 Other references:
